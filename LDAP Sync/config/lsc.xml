@@ -1,0 +1,132 @@
+<?xml version="1.0" ?>
+
+<lsc xmlns="http://lsc-project.org/XSD/lsc-core-2.1.xsd" revision="0">
+
+ <connections>
+    <databaseConnection>
+      <name>sql-dest-conn</name>
+      <url>jdbc:sqlserver://r90hvvwn.asia.kofax.com;database=saperion_local</url>
+      <username>sa</username>
+      <password>saperion@123</password>
+      <driver>com.microsoft.sqlserver.jdbc.SQLServerDriver</driver>
+    </databaseConnection>
+ 
+    <ldapConnection>
+      <name>ldap-src-conn</name>
+      <url>ldap://10.184.247.114:389/OU=SaperionMandant1,DC=QALDAP3,DC=LOCAL</url> 	 
+      <username>CN=ldaptest2,OU=SaperionLarge,DC=QALDAP3,DC=LOCAL</username>
+      <password>ldaptest2</password>
+      <authentication>SIMPLE</authentication>
+      <referral>IGNORE</referral>
+      <derefAliases>NEVER</derefAliases>
+      <version>VERSION_3</version>
+      <pageSize>-1</pageSize>
+      <factory>com.sun.jndi.ldap.LdapCtxFactory</factory>
+      <tlsActivated>false</tlsActivated>
+	   <binaryAttributes>
+                <string>objectGUID</string>
+      </binaryAttributes>
+    </ldapConnection>
+  </connections>
+  
+  <audits>
+	<csvAudit>
+		<name>csv</name>
+		<append>true</append>
+		<operations>create, delete</operations>
+		<file>/tmp/dump.csv</file>
+		<datasets>cn, dn</datasets>
+		<separator>,</separator>
+	</csvAudit>
+  </audits>
+
+  <tasks>
+    <task>
+      <name>SaperionUserSyncTask</name>
+      <bean>org.lsc.beans.SimpleBean</bean>	  
+	  <ldapSourceService>
+        <name>ldap-src-service</name>
+        <connection reference="ldap-src-conn" />
+        <baseDn>OU=SaperionMandant1,DC=QALDAP3,DC=LOCAL</baseDn>
+        <pivotAttributes>
+          <string>cn</string>		 
+        </pivotAttributes>
+        <fetchedAttributes>
+          <string>displayName</string>
+          <string>distinguishedName</string>
+          <string>objectClass</string>
+          <string>cn</string>
+          <string>objectSid</string>
+          <string>objectGUID</string>		  
+		  
+        </fetchedAttributes>
+        <!--getAllFilter>(objectClass=user)</getAllFilter-->
+		<!--getOneFilter>(&amp;(objectClass=user)(DISPLAYNAME={DISPLAYNAME}))</getOneFilter-->
+		
+		<getAllFilter><![CDATA[(&(objectClass=user)(cn=*))]]></getAllFilter>
+		<getOneFilter><![CDATA[(&(objectClass=user)(cn={cn}))]]></getOneFilter> 
+        <cleanFilter><![CDATA[(&(objectClass=user)(cn={cn}))]]></cleanFilter>        		       
+       </ldapSourceService>
+	  
+	  <databaseDestinationService>
+        <name>sql-dest-service</name>
+        <connection reference="sql-dest-conn" />
+	   <requestNameForList>getInetOrgPersonList</requestNameForList> 
+       <requestNameForObject>getInetOrgPerson</requestNameForObject>          
+       	<requestsNameForInsert>
+		    <string>insertInetOrgPerson</string>
+        </requestsNameForInsert>
+       	<requestsNameForUpdate>
+          <string>updateInetOrgPerson</string>
+        </requestsNameForUpdate>
+       	<requestsNameForDelete>
+          <string>deleteInetOrgPerson</string>
+        </requestsNameForDelete>        	
+      </databaseDestinationService>
+	  
+
+      <propertiesBasedSyncOptions>
+        <!--mainIdentifier>"cn=" + srcBean.getDatasetValuesById("cn") + "OU=SaperionMandant1,DC=QALDAP3,DC=LOCAL"</mainIdentifier-->
+		<mainIdentifier>srcBean.getMainIdentifier()</mainIdentifier>
+        <defaultDelimiter>;</defaultDelimiter>
+        <defaultPolicy>FORCE</defaultPolicy>
+        <conditions>
+            <create>true</create>        	
+            <update>true</update>
+        	<delete>true</delete>
+        	<changeId>false</changeId>
+        </conditions>
+
+        <!--dataset>
+          <name>objectClass</name>
+          <policy>KEEP</policy>
+          <defaultValues></defaultValues>
+          <forceValues></forceValues>
+          <createValues>
+            <string>"user"</string>
+            <string>"top"</string>
+          </createValues>
+          <delimiter>,</delimiter>
+        </dataset>
+		
+        <dataset>
+          <name>userPassword</name>
+          <policy>KEEP</policy>
+          <defaultValues>
+            <string>"changethis"</string>
+          </defaultValues>
+          <forceValues></forceValues>
+          <createValues></createValues>
+        </dataset -->
+      </propertiesBasedSyncOptions>
+    </task>
+  </tasks>
+
+  <security>
+    <encryption>
+      <keyfile>etc/lsc.key</keyfile>
+      <algorithm>AES</algorithm>
+      <strength>128</strength>
+    </encryption>
+  </security>
+</lsc>

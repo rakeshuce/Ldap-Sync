@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://www.ibatis.com/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="InetOrgPerson">
+
+	<select id="getInetOrgPerson" resultClass="java.util.HashMap" parameterClass="java.util.Map">
+		Select			
+			pers.DISPLAYNAME,
+			pers.FULLNAME,
+			pers.ID,
+			pers.PASSWD,
+			pers.GROUPS			
+		FROM dbo.xsusr pers
+		WHERE pers.DISPLAYNAME = #cn#
+	</select>
+
+	<select id="checkPersonForClean" resultClass="java.util.HashMap" parameterClass="java.util.Map">
+		Select
+			pers.DISPLAYNAME AS cn
+		FROM dbo.xsusr pers
+		WHERE pers.DISPLAYNAME = #cn#
+	</select>
+
+	<select id="getInetOrgPersonList" resultClass="java.util.HashMap">
+		SELECT pers.DISPLAYNAME AS cn
+		FROM dbo.xsusr pers
+	</select>
+	
+	 <insert id="insertInetOrgPerson" parameterClass="java.util.Map">
+        insert into dbo.xsusr (DISPLAYNAME, FULLNAME,DESCRIPTION,test,test2,test3, ID, PASSWD, GROUPS)
+		values (#cn#, #distinguishedName#,CONVERT(varbinary(max),#objectGUID#),#objectGUID#,#objectGUID#,#objectGUID#,#ID#, #PASSWD#, #GROUPS#)
+
+      </insert>
+
+        <update id="updateInetOrgPerson" parameterClass="java.util.Map">
+        update dbo.xsusr
+        set DISPLAYNAME = #cn#,
+        FULLNAME = #distinguishedName#,
+        ID = #ID#,
+        PASSWD = #PASSWD#,
+        GROUPS = #GROUPS# where  DISPLAYNAME = #cn#
+        </update>
+
+        <delete id="deleteInetOrgPerson" parameterClass="java.util.Map">
+         delete from dbo.xsusr where  DISPLAYNAME = #cn#
+        </delete>
+
+</sqlMap>
